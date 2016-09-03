@@ -1,0 +1,79 @@
+JSON = new function() {
+    this.stringify = function(n) {
+        var i = typeof n, u, t, f, r;
+        if ("object" != i || null === n)
+            return "string" == i && (n = '"' + n + '"'),
+            String(n);
+        f = [];
+        r = n && n.constructor == Array;
+        for (u in n)
+            t = n[u],
+            i = typeof t,
+            "string" == i ? t = '"' + t + '"' : "object" == i && null !== t && (t = JSON.stringify(t)),
+            f.push((r ? "" : '"' + u + '":') + String(t));
+        return (r ? "[" : "{") + String(f) + (r ? "]" : "}")
+    }
+    ;
+    this.decode = function() {
+        var f, t, n, e;
+        if (y("toString")) {
+            switch (arguments.length) {
+            case 2:
+                n = arguments[0];
+                f = arguments[1];
+                break;
+            case 1:
+                i[typeof arguments[0]](arguments[0]) === Function ? (n = this,
+                f = arguments[0]) : n = arguments[0];
+                break;
+            default:
+                n = this
+            }
+            if (r.test(n))
+                try {
+                    if (t = u("(".concat(n, ")")),
+                    f && t !== null && (e = i[typeof t](t)) && (e === Array || e === Object))
+                        for (n in t)
+                            t[n] = v(n, t) ? f(n, t[n]) : t[n]
+                } catch (o) {}
+            else
+                throw new JSONError("bad data");
+        }
+        return t
+    }
+    ;
+    this.encode = function() {
+        var n = arguments.length ? arguments[0] : this, r, u, l, c;
+        if (n === null )
+            r = "null";
+        else if (n !== undefined && (u = i[typeof n](n)))
+            switch (u) {
+            case Array:
+                r = [];
+                for (var l = 0, h = 0, a = n.length; h < a; h++)
+                    n[h] !== undefined && (u = JSON.encode(n[h])) && (r[l++] = u);
+                r = "[".concat(r.join(","), "]");
+                break;
+            case Boolean:
+                r = String(n);
+                break;
+            case Date:
+                r = '"'.concat(n.getFullYear(), "-", t(n.getMonth() + 1), "-", t(n.getDate()), "T", t(n.getHours()), ":", t(n.getMinutes()), ":", t(n.getSeconds()), '"');
+                break;
+            case Function:
+                break;
+            case Number:
+                r = isFinite(n) ? String(n) : "null";
+                break;
+            case String:
+                r = '"'.concat(n.replace(f, o).replace(e, s), '"');
+                break;
+            default:
+                l = 0;
+                r = [];
+                for (c in n)
+                    n[c] !== undefined && (u = JSON.encode(n[c])) && (r[l++] = '"'.concat(c.replace(f, o).replace(e, s), '":', u));
+                r = "{".concat(r.join(","), "}")
+            }
+        return r
+    }
