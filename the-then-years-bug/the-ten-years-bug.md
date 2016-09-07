@@ -3,7 +3,7 @@ The Ten Years Bug
 
 Developers often make mistakes. Bugs go unnoticed, uncaught by unit tests, overlooked by QA and reach production. Sometimes it's just a minor issue, sometimes it's major bug that costs you lost data and users' confidence. Whatever it is, the issue gets fixed. You patch the bug, mend corrupt data and everything gets back to its place.
 
-Surly there isn't a bug that is unfixable right?
+Surely there isn't a bug that is unfixable right?
 
 Our snippet
 ------------
@@ -51,17 +51,15 @@ There is a horrible reality hidden in this piece of code. The Cache-Control max-
 
 What is Cache-Control?
 ------------
-[To quote Googles performance guide](https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching#cache-control) "The best request is a request that does not need to communicate with the server". Cache-Control is the modern method to customize the browsers caching policy.
+Cache-Control is the modern method to customize the browsers caching policy. Its an HTTP header that should come with every resource file you serve.
 
-This policy aims to help the browser answer questions like
+This caching policy aims to help the browser answer questions like
 * Should the browser cache a file?
 * How should the browser know that a cached file is no longer valid?
 
 The answer to the second question is the 'max-age' directive. Cache-Control max-age is our way to tell the browser - 'this resource is good for this amount of seconds. Cache it, and don't check on it until then'.
 
 The purpose is clear - minimize the amounts of calls from client to server. Even calls that result in a "304 Not modified" are suboptimal.
-
-TODO: add graphics
 
 Now lets look at the header we attached to our recorder.js file:
 
@@ -73,9 +71,34 @@ We just told all of our end users browsers to cache our recorder for 10 years wi
 
 What we did
 -----------
-Under different circumstances this wouldn't be a big issue. Just change the filename and be done with it. But for our case, changing the filename means changing the snippet, and changing the snippet means contacting every client, and asking nicely to update their code.
+Under different circumstances this wouldn't be a big issue. Just change the filename and be done with it. But in our case, changing the filename means changing the snippet, and changing the snippet means contacting every client, and asking nicely to update their code.
 
-Well it couldn't be helped. We've created recorder_v2.js, and sent out an email to all our customers with an explanation and instructions how to change the snippet. As an auxiliary fix we've configured S3 to permanently redirect all requests to recorder.js to recorder_v2.js
+Well it couldn't be helped. We've created recorder_v2.js, and sent out an email to all our customers with an explanation and instructions how to change the snippet. As an auxiliary fix we've configured S3 to permanently redirect all recorder.js requests to recorder_v2.js
+
+What we should have done in the first place
+-----------------------
+As we now understand we definitely should not have added the max-age=315360000 to our file headers. But what is the correct cache configuration?
+
+In choosing the best caching policy we need to confront a tradeoff between the amount of time new file versions propagate to all users, and the amount of requests to server we perform.
+
+Lets examine some techniques:
+
+**Small max-age value - mediocre update propagation, few requests to server**
+  Having a small max-age value allows us to minimize the amount of request drastically. A user that traverses serveral pages of a site would only request a single request to the server, either to download the resource, or make sure the file did not change, thus validating the cache.
+
+**use the no-cache directive - updates propagate immediately, each use of file requires a request to server**
+  The no-cache directive will tell the browser to always request the file from the server. Most of these requests will turn out to be "304 not modified".
+  This will result in an immediate discovery of new file version, but will cost us in many request to server.
+
+  Note 1 - There's more to it. in order for the server to know the cached file is different from the most recent version, you have to make sure your server is configured to produce ETags. You can read more about it [here](https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching?hl=en#validating-cached-responses-with-etags).
+
+  Note 2 - Don't confuse the no-cache directive with the no-store directive. The latter will prevent the browser from storing any file cache. This will result in re-downloading said file each and every time a user access it.
+
+**Large max-age with cache busting hashes - immediate update propagation, very few requests to server**
+  When possible, this is an awesome approach. Using a large max-age value, you instruct the browser to cache a file for a long time. When you change the file, you also change its name. When the browser reach the updated file, it won't recognize it, download and cache it again.
+
+The solution that we found most right for us was a max-age of 30 minutes. We strive to make as less impact on our end users experience and are willing to make this compromise in order to achieve it.
+Unfortunately the third option is irrelevant for us. As we cannot change our snippet, we cannot add a cache busting hash to our recorder(_v2).js file
 
 In conclusion
 ------------
