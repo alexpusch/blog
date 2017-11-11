@@ -1,0 +1,31 @@
+namespace Serializer;
+
+// we can define enums
+enum EventType:short {
+  MOUSE_CLICK,
+  MOUSE_POSITION,
+  INPUT,
+  DOM_MUTATION
+}
+
+// a table is similar to struct definition
+table MouseClickData{ /* event data definition */ }
+table MousePositionData{ /* ... */ }
+table InputData{ /* ... */ }
+table DomMutationData{ /* ... */ }
+
+// union allows us to store different types of data in the same field
+union EventData {
+  MouseClickData,
+  MousePositionData,
+  InputData,
+  DomMutationData
+}
+
+table Event {
+  timestamp: ulong;
+  type: EventType;
+  data: EventData;
+}
+
+root_type Event;
